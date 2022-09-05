@@ -1,25 +1,50 @@
-#include "assignment/subset_sum/bit_masking.hpp"
+#include "assignment/knapsack/backtracking.hpp"
 
 #include <cassert>  // assert
 
-#include "assignment/bits.hpp"  // is_bit_set, mask2indices
+#include "assignment/bits.hpp"
 
 namespace assignment {
 
-  std::vector<std::vector<int>> SubsetSumBitMasking::search(const std::vector<int>& set, int target_sum) const {
-    assert(target_sum > 0 && set.size() <= 16);
+  std::vector<int> KnapsackBacktracking::solve(const Profits& profits, const Weights& weights, int capacity) const {
+    assert(profits.size() == weights.size() && capacity > 0);
 
-    std::vector<std::vector<int>> indices;
+    // результат: наибольшая "польза"
+    int best_profit = 0;
+    int best_profit_mask = 0;
 
-    const auto num_elems = static_cast<int>(set.size());  // N
-    const int num_subsets = 1 << num_elems;               // 2^N
+    // вызов вспомогательного метода: обратите внимание на входные аргументы
+    // и на то, как они передаются (по значению или ссылке, почему так?)
+    solve(profits, weights, capacity, -1, 0, 0, 0, best_profit, best_profit_mask);
 
-    // 1. Внешний цикл: пробегаемся по всем битовым маскам от 0..00 до 1..11
-    // 2. Внутренний цикл: проверка разрядов битовой маски и генерация подмножества, ассоциирующегося с этой маской
-    // 3. Подсчет суммы текущего подмножества, сохранение индексов подмножества с целевой суммой в результат
-    // Tips: можно пропустить итерацию, если сумма текущего подмножества стала больше целевой суммы
+    return mask2indices(profits, best_profit_mask);
+  }
 
-    return indices;
+  void KnapsackBacktracking::solve(const Profits& profits, const Weights& weights, int capacity, int index, int mask,
+                                   int weight, int profit, int& best_profit, int& best_profit_mask) const {
+
+    // Ограничение 0: выход за пределы
+    if (index == static_cast<int>(profits.size())) {
+      return;
+    }
+
+    // Ограничение 1: превышение лимита емкости рюкзака
+    if (weight > capacity) {
+      return;
+    }
+
+    // ... если текущая "польза" максимальна, обновляем наилучшую "пользу"
+    if (profit > best_profit) {
+      best_profit_mask = mask;
+      best_profit = profit;
+    }
+
+    // рассматриваем следующий элемент
+    index += 1;
+    solve(profits,weights,capacity,index, set_bit(mask,index),weight + weights[index],profit + profits[index],best_profit,best_profit_mask);
+    solve(profits,weights,capacity,index,mask,weight,profit,best_profit,best_profit_mask );
+
+    // ... рекурсивные вызовы со включением/исключением следующего элемента
   }
 
 }  // namespace assignment
